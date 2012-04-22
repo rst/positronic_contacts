@@ -25,8 +25,10 @@ class ViewContactActivity
 
       finish
     }
-    findView( TR.join_split_button ).onClick {
-      toastLong( "not yet ...")
+    findView( TR.call_options_button ).onClick {
+      val intent = new Intent( this, classOf[ CallOptionsActivity ])
+      intent.putExtra( "contact", getIntent.getSerializableExtra( "contact" ))
+      startActivity( intent )
     }
   }
 

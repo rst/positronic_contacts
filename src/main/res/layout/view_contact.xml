@@ -17,8 +17,8 @@
                android:layout_width="0dip"
                android:layout_weight="1"/>
     <org.positronicnet.ui.PositronicButton
-               android:id="@+id/join_split_button"
-               android:text="@string/join_split_contact"
+               android:id="@+id/call_options_button"
+               android:text="@string/call_options"
                android:layout_margin="4dip"
                android:layout_width="0dip"
                android:layout_weight="1"/>

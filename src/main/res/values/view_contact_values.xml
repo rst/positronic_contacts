@@ -2,6 +2,7 @@
 
   <string name="edit_contact">Edit</string>
   <string name="join_split_contact">Join/Split</string>
+  <string name="call_options">Call Options</string>
 
   <string name="phone_view_tag">Phone\u0020</string>
   <string name="email_view_tag">Email\u0020</string>

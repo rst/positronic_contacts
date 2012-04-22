@@ -19,5 +19,7 @@
                   android:name=".EditContactActivity"/>
         <activity android:label="View Contact" 
                   android:name=".ViewContactActivity"/>
+        <activity android:label="Call Options" 
+                  android:name=".CallOptionsActivity"/>
     </application>
 </manifest>

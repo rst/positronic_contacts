@@ -18,11 +18,8 @@ import android.provider.ContactsContract.CommonDataKinds
 import android.text.TextUtils
 import android.graphics.BitmapFactory
 
-// Contacts table.  For now, we're treating the whole thing as
-// read-only, so we don't bother with read-only marks on particular
-// columns.  (There are only a few modifiable columns; it might be
-// worth some API to set the default, so we can special-case only the
-// writable ones.)
+// Contacts table.  Most columns are maintained by the provider, and
+// read-only...
 
 case class Contact (
   val lookupKey:          String            = "",
@@ -58,6 +55,16 @@ extends ManagedRecord with ReflectiveProperties
 
 object Contacts
   extends RecordManagerForFields[ Contact, CC.Contacts ]
+{
+  private val col = ReflectUtils.getStatics[ String, CC.Contacts ]
+
+  // Most fields read-only; declare the ones we want to write,
+  // for call options...
+
+  defaultFieldMapping( MapAs.ReadOnly )
+  mapField( "sendToVoicemail", col("SEND_TO_VOICEMAIL"), MapAs.ReadWrite )
+  mapField( "customRingtone",  col("CUSTOM_RINGTONE"),   MapAs.ReadWrite )
+}
 
 // Raw-contacts table.
 //

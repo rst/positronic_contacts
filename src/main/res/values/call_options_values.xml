@@ -1,0 +1,7 @@
+<resources>
+
+  <string name="call_options_for">Call Options For</string>
+  <string name="send_to_voicemail">Send to Voicemail</string>
+  <string name="ringtone">Ringtone</string>
+
+</resources>

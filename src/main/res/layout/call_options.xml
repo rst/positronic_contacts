@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/call_options"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content">
+  <LinearLayout android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+    <TextView android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/call_options_for"
+              android:textSize="15dp"/>
+    <TextView android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:id="@+id/displayName"
+              android:textSize="15dp"/>
+  </LinearLayout>
+  <LinearLayout android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+    <TextView android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/ringtone"
+              android:textSize="15dp"/>
+    <org.positronicnet.ui.PositronicButton
+              android:id="@+id/ringtoneName"
+              android:layout_height="wrap_content"
+              android:layout_width="wrap_content"
+              android:textSize="15dp"/>
+  </LinearLayout>
+  <LinearLayout android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+    <TextView android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/send_to_voicemail"
+              android:textSize="15dp"/>
+    <CheckBox android:id="@+id/sendToVoicemail"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"/>
+  </LinearLayout>
+</LinearLayout>
