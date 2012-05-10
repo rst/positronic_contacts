@@ -109,4 +109,8 @@
   <string name="sec_add">Add</string>
   <string name="sec_choose">Choose</string>
 
+  <!-- The following actually for editing "call options" -->
+
+  <string name="default_ringtone">(default)</string>
+
 </resources>

@@ -33,7 +33,8 @@
               android:layout_height="wrap_content"
               android:text="@string/send_to_voicemail"
               android:textSize="15dp"/>
-    <CheckBox android:id="@+id/sendToVoicemail"
+    <org.positronicnet.ui.PositronicCheckBox
+              android:id="@+id/sendToVoicemail"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"/>
   </LinearLayout>
