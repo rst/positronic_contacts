@@ -12,7 +12,7 @@
               android:textSize="15dp"/>
     <TextView android:layout_width="wrap_content"
               android:layout_height="wrap_content"
-              android:id="@+id/displayName"
+              android:id="@+id/displayNamePrimary"
               android:textSize="15dp"/>
   </LinearLayout>
   <LinearLayout android:layout_width="fill_parent"
@@ -22,7 +22,7 @@
               android:text="@string/ringtone"
               android:textSize="15dp"/>
     <org.positronicnet.ui.PositronicButton
-              android:id="@+id/ringtoneName"
+              android:id="@+id/ringtoneLabel"
               android:layout_height="wrap_content"
               android:layout_width="wrap_content"
               android:textSize="15dp"/>
