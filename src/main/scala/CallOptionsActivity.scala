@@ -4,7 +4,11 @@ import org.positronicnet.ui._
 import org.positronicnet.orm.Actions._
 
 import android.media.RingtoneManager
+
 import android.net.Uri
+import android.content.Intent
+import android.app.Activity
+import android.util.Log
 
 class CallOptionsActivity 
   extends PositronicActivity( layoutResourceId = R.layout.call_options )
@@ -35,12 +39,48 @@ class CallOptionsActivity
 
   def toggleSendToVoicemail = {
     val currentValue = workingCopy.sendToVoicemail
-    val newState = workingCopy.copy( sendToVoicemail = !currentValue )
-    Contacts ! Save( newState )
-    useContact( newState )
+    doUpdate( workingCopy.copy( sendToVoicemail = !currentValue ))
   }
 
+  // Ringtone management.  Only activity result stuff here, so no need
+  // for dispatching ceremony...
+
+  val RINGTONE_PICKED = 3003
+
   def chooseRingtone = {
-    toastLong("not yet")
+
+    val intent = new Intent( RingtoneManager.ACTION_RINGTONE_PICKER )
+
+    // Show default ringtone, show nothing *but* ringtones, don't show
+    // "silent".  All per Gingerbread stock behavior...
+
+    intent.putExtra( RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true )
+    intent.putExtra( RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false )
+    intent.putExtra( RingtoneManager.EXTRA_RINGTONE_TYPE, 
+                     RingtoneManager.TYPE_RINGTONE )
+
+    // Tell manager about current value...
+
+    intent.putExtra( RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                     if ( workingCopy.customRingtone != null )
+                       Uri.parse( workingCopy.customRingtone )
+                     else
+                       RingtoneManager.getDefaultUri( 
+                         RingtoneManager.TYPE_RINGTONE ))
+
+    startActivityForResult( intent, RINGTONE_PICKED )
+  }
+
+  override def onActivityResult( reqCode: Int, resultCode: Int, data: Intent )= 
+    if ( resultCode == Activity.RESULT_OK && reqCode == RINGTONE_PICKED ) {
+      val uri: Uri = data.getParcelableExtra( 
+        RingtoneManager.EXTRA_RINGTONE_PICKED_URI ).asInstanceOf[ Uri ]
+      val newVal = if (uri == null) null else uri.toString
+      doUpdate( workingCopy.copy( customRingtone = newVal ))
+    }
+
+  def doUpdate( newState: Contact ) = {
+    Contacts ! Save( newState )
+    useContact( newState )
   }
 }
