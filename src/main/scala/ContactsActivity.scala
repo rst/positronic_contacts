@@ -12,8 +12,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.{TextView, ListView, ImageView, LinearLayout}
 
-import android.accounts.{AccountManager, Account}
-
 import scala.collection.mutable.ArrayBuffer
 
 object ContactsActivityUiBinder extends UiBinder {
@@ -99,41 +97,17 @@ class ContactsActivity
     startViewingContact( contact )
   }
 
-  def newContact = {
-    val accounts = AccountManager.get( this ).getAccounts
-    if (accounts.size == 0)
-      newContactForAccount( null )
-    else if (accounts.size == 1)
-      newContactForAccount( accounts(0) )
-    else {
-      val title = R.string.choose_account_for_contact
-      withChoiceFromDialog[ Account ]( title , accounts, _.name ){
-        newContactForAccount( _ )
-      }
-    }
-  }
-
-  def newContactForAccount( acct: Account ) =
-    startEditingRawContacts( Seq (
-      if (acct != null)
-        new RawContact( accountName = acct.name, accountType = acct.`type` )
-      else
-        new RawContact))
-
   def startViewingContact( contact: Contact ) = {
     (RawContacts.forContact( contact ) ? Query).onSuccess { rawContacts =>
       val intent = new Intent( this, classOf[ ViewContactActivity ])
-      intent.putExtra( "contact", contact.asInstanceOf[ java.io.Serializable ] )
-      intent.putExtra( "raw_contacts", 
-                       rawContacts.asInstanceOf[ java.io.Serializable ])
+      intent.setData( contact.lookupUri )
       startActivity( intent )
     }
   }
 
-  def startEditingRawContacts( rawContacts: Seq[ RawContact ] ) = {
+  def newContact = {
     val intent = new Intent( this, classOf[ EditContactActivity ])
-    intent.putExtra( "raw_contacts", 
-                     rawContacts.asInstanceOf[ java.io.Serializable ])
+    // no data
     startActivity( intent )
   }
 

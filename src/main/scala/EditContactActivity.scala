@@ -5,6 +5,8 @@ import org.positronicnet.notifications.Actions._
 import org.positronicnet.notifications.Future
 import org.positronicnet.content.PositronicContentResolver
 
+import android.accounts.{AccountManager, Account}
+
 import android.util.Log
 import android.os.Bundle
 import android.content.Context
@@ -12,7 +14,7 @@ import android.view.{View, LayoutInflater}
 
 class EditContactActivity
   extends AggregatedContactActivity( layoutResourceId = R.layout.edit_contact )
-  with ViewUtils
+  with ActivityViewUtils
 {
   onCreate {
     findView( TR.save_button ).onClick {
@@ -31,6 +33,33 @@ class EditContactActivity
       dialogCase( R.string.revert_contact ){ finish },
       dialogCase( R.string.cancel_back ){ /* nothing */ }
     )
+  }
+
+  // Creating state for a new contact...
+
+  override def setupForNewContact = {
+    val accounts = AccountManager.get( this ).getAccounts
+    if (accounts.size == 0)
+      setupForNewContactInAccount( null )
+    else if (accounts.size == 1)
+      setupForNewContactInAccount( accounts(0) )
+    else {
+      val title = R.string.choose_account_for_contact
+      withChoiceFromDialog[ Account ]( title , accounts, _.name ){
+        setupForNewContactInAccount( _ )
+      }
+    }
+  }
+
+  def setupForNewContactInAccount( acct: Account ) = {
+
+    val rawContact = 
+      if (acct != null)
+        new RawContact( accountName = acct.name, accountType = acct.`type` )
+      else
+        new RawContact
+
+    setupFor( new Contact, Seq( rawContact ))
   }
 
   // Loading a state into our editor widgets

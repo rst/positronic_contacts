@@ -17,8 +17,7 @@ class ViewContactActivity
     findView( TR.edit_button ).onClick {
       val rawContacts = contactState.rawContacts
       val intent = new Intent( this, classOf[ EditContactActivity ])
-      intent.putExtra( "raw_contacts", 
-                       rawContacts.asInstanceOf[ java.io.Serializable ])
+      intent.setData( contactItem.lookupUri )
       startActivity( intent )
 
       // I *never* want to view again after a save here, so...
@@ -27,15 +26,13 @@ class ViewContactActivity
     }
     findView( TR.call_options_button ).onClick {
       val intent = new Intent( this, classOf[ CallOptionsActivity ])
-      intent.putExtra( "contact", getIntent.getSerializableExtra( "contact" ))
+      intent.putExtra( "contact", contactItem )
       startActivity( intent )
     }
   }
 
   def bindContactState = {
-    val contactSlug = getIntent.getSerializableExtra( "contact" )
-    val contact = contactSlug.asInstanceOf[ Contact ]
-    ContactsActivityUiBinder.show( contact, findView( TR.contact_general ) )
+    ContactsActivityUiBinder.show( contactItem, findView( TR.contact_general ) )
     findView( TR.contact_data_items ).bind( contactState.aggregatedData )
   }
 

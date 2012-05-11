@@ -18,6 +18,8 @@ import android.provider.ContactsContract.CommonDataKinds
 import android.text.TextUtils
 import android.graphics.BitmapFactory
 
+import android.net.Uri
+
 // Contacts table.  Most columns are maintained by the provider, and
 // read-only...
 
@@ -38,7 +40,7 @@ extends ManagedRecord with ReflectiveProperties
 {
   lazy val lcDisplayName = displayNamePrimary.toLowerCase // for filtering
 
-  @transient lazy val raw = 
+  @transient lazy val rawContacts = 
     new HasMany( RawContacts, 
                  ReflectUtils.getStatic[ String, CC.RawContacts ]("CONTACT_ID"))
 
@@ -51,6 +53,9 @@ extends ManagedRecord with ReflectiveProperties
       (ContactData.photos ? FindById( this.photoId ))
     else
       Future( new Photo )
+
+  @transient lazy val lookupUri =
+    CC.Contacts.getLookupUri( this.id.id, this.lookupKey )
 }
 
 object Contacts
@@ -64,6 +69,19 @@ object Contacts
   defaultFieldMapping( MapAs.ReadOnly )
   mapField( "sendToVoicemail", col("SEND_TO_VOICEMAIL"), MapAs.ReadWrite )
   mapField( "customRingtone",  col("CUSTOM_RINGTONE"),   MapAs.ReadWrite )
+}
+
+// Kludge pseudo-action to get a contact from a URI.  
+// Suggests the need for further work on the plumbing upstream...
+
+case class FindContactFromUri( uri: Uri )
+  extends ScopeQueryAction[ Contact, Contact ]
+{
+  val complete : PartialFunction[ BaseNotifierImpl[ IndexedSeq[ Contact ]], Contact ] = {
+    case _ =>
+      val query = PositronicContentResolver( uri )
+      Contacts.fetchRecords( query )(0)
+  }
 }
 
 // Raw-contacts table.
