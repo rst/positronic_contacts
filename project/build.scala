@@ -19,7 +19,17 @@ object General {
       libraryDependencies ++= Seq(
         "org.scalatest"     %% "scalatest"        % "1.6.1"        % "test",
         "org.positronicnet" %% "positronicnetlib" % "0.4-SNAPSHOT"
-      ))
+      ),
+      proguardOption in Android := """
+       -keepclassmembers class * implements java.io.Serializable {
+        private static final java.io.ObjectStreamField[] serialPersistentFields;
+        private void writeObject(java.io.ObjectOutputStream);
+        private void readObject(java.io.ObjectInputStream);
+        java.lang.Object writeReplace();
+        java.lang.Object readResolve();
+       }
+      """
+    )
 }
 
 object AndroidBuild extends Build {
