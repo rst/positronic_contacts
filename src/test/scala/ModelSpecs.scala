@@ -3,6 +3,7 @@ package org.positronicnet.sample.contacts.test
 import org.positronicnet.sample.contacts._
 
 import org.positronicnet.content.PositronicContentResolver
+import org.positronicnet.notifications.Future
 
 import org.scalatest._
 import org.positronicnet.test.RobolectricTests
@@ -12,12 +13,23 @@ import org.scalatest.matchers.ShouldMatchers
 import android.provider.ContactsContract
 import android.provider.ContactsContract.{CommonDataKinds => CDK}
 
+class TestAccountInfo( atype: String, aname: String )
+  extends AccountInfo
+{
+  val initialGroupQuery = Future[ IndexedSeq[ Group ]]( IndexedSeq.empty )
+  val dataKinds = BaseAccountInfo.dataKinds
+}
+
 class ModelSpec
   extends Spec
   with ShouldMatchers
   with BeforeAndAfterEach
   with RobolectricTests
 {
+  AccountInfo.register( "org.positronicnet.test" ){ (rawc) =>
+    new TestAccountInfo( rawc.accountType, rawc.accountName )
+  }
+
   override def beforeEach = 
     PositronicContentResolver.openInContext( Robolectric.application )
 
@@ -268,6 +280,21 @@ class ModelSpec
       val hackedPhone = (new Phone).categoryLabel_:=( 
         CategoryLabel( TYPE_CUSTOM, "car" ))
       assertCategory( hackedPhone.categoryLabel, TYPE_CUSTOM, "car" )
+    }
+  }
+
+  describe( "AccountInfo mapping" ){
+
+    it ("should recognize known account types") {
+      val rawc = new RawContact( accountType = "org.positronicnet.test" )
+      val acctInfo = AccountInfo.forRawContact( rawc )
+      assert( acctInfo.isInstanceOf[ TestAccountInfo ] )
+    }
+
+    it ("should give an 'OtherAccountInfo' for unknown accounts") {
+      val rawc = new RawContact( accountType = "org.example" )
+      val acctInfo = AccountInfo.forRawContact( rawc )
+      assert( acctInfo.isInstanceOf[ OtherAccountInfo ] )
     }
   }
 

@@ -1,9 +1,11 @@
 package org.positronicnet.sample.contacts
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.HashMap
 
 import android.provider.ContactsContract
 import android.provider.ContactsContract.{CommonDataKinds => CDK}
+import android.text.TextUtils
 
 import org.positronicnet.notifications.Actions._
 import org.positronicnet.notifications.Future
@@ -11,13 +13,24 @@ import org.positronicnet.notifications.Future
 // Information on account types...
 
 object AccountInfo {
-  def forRawContact( rawc: RawContact ) =
-    rawc.accountType match {
-      case "com.google" => 
-        new GoogleAccountInfo( rawc.accountType, rawc.accountName )
-      case _ => 
-        new OtherAccountInfo( rawc.accountType, rawc.accountName )
-    }
+
+  private val accountInfoTypes = 
+    new HashMap[ String, RawContact => AccountInfo ]
+
+  def register( acctType: String )( func: RawContact => AccountInfo ) =
+    accountInfoTypes( acctType ) = func
+
+  register( "com.google" ){ (rawc) => 
+    new GoogleAccountInfo( rawc.accountType, rawc.accountName )
+  }
+
+  def forRawContact( rawc: RawContact ) = {
+    val func = accountInfoTypes.getOrElse( 
+      rawc.accountType,
+      (rawc: RawContact) => 
+        new OtherAccountInfo( rawc.accountType, rawc.accountName ))
+    func( rawc )
+  }
 }
 
 abstract class AccountInfo extends Serializable {
