@@ -64,7 +64,9 @@ class DataKindInfo ( val categoryTagToResource: (Int => Int) = (x => -1),
     }
 
   def categoryLabelToString( label: CategoryLabel ) =
-    if (infoForCategoryTag( label.tag ).isCustom)
+    if (infoForCategoryTag( label.tag ).isCustom
+        && label.label != null
+        && TextUtils.isGraphic( label.label ))
       label.label
     else
       categoryTagToString( label.tag )
@@ -82,6 +84,8 @@ case class CategoryInfo ( dataKindInfo: DataKindInfo,
                           isCustom: Boolean )
 {
   lazy val displayString = dataKindInfo.categoryTagToString( tag )
+  def availableAfterHaving( numItems: Int ) =
+    (maxRecords < 0) || (numItems < maxRecords)
 }
 
 object BaseAccountInfo {
@@ -206,4 +210,5 @@ class GoogleAccountInfo( acctType: String, acctName: String )
           category( CDK.BaseTypes.TYPE_CUSTOM, isCustom = true )
         })
 }
+
 

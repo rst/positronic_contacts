@@ -131,13 +131,35 @@ class RawContactEditState( val aggregateEditState: AggregateContactEditState,
     aggregateEditState.markSuperPrimary( rec )
 
   // Determine what categories for a given type are available...
-  // All of them, for the moment.
 
   def availableCategories( item: ContactData ) =
     accountInfo.dataKinds.get( item.typeTag ) match {
-      case Some( kindInfo ) => kindInfo.categories
-      case None => IndexedSeq.empty
+      case Some( kindInfo ) => 
+        val whatsUsed = currentCategories( item )
+        kindInfo.categories.filter{ category =>
+          category.availableAfterHaving( whatsUsed( category.tag )) }
+      case None => 
+        IndexedSeq.empty
     }
+  
+  // Taking inventory of our current items, broken down by "kind" (class)
+  // and category tag.
+
+  def currentCategories( item: ContactData ): Map[ Int, Int ] = {
+
+    val res = new HashMap[ Int, Int ].withDefault( categoryTag => 0 )
+    val klass = item.getClass
+
+    for (it <- currentItems)
+      if (klass.isInstance( it ))
+        it match {
+          case item: ContactDataWithCategoryLabel =>
+            res( item.categoryTag ) = res( item.categoryTag ) + 1
+          case _ =>
+        }
+
+    res.toMap
+  }
 
   // Data kind info for an item, if any
 
@@ -147,7 +169,6 @@ class RawContactEditState( val aggregateEditState: AggregateContactEditState,
   // Prepare a new item for insertion, if we have room for one.
   // May return None, in which case, insertion is disallowed
   // (most likely, because we're up against some limit).
-  // But not yet.
 
   def prepareForInsert( rawItem: ContactData ) = {
 
@@ -156,12 +177,36 @@ class RawContactEditState( val aggregateEditState: AggregateContactEditState,
     item match {
 
       case itemWithCategory: ContactDataWithCategoryLabel =>
-        accountInfo.dataKinds.get( item.typeTag ) map { info =>
-          item.setProperty[ Int ]("categoryTag", info.categories(0).tag )
+        chooseCategory( itemWithCategory ).map {
+          category => item.setProperty( "categoryTag", category.tag )
         }
 
       case _ => Some( item )
     }
+  }
+
+  private
+  def chooseCategory( item: ContactDataWithCategoryLabel ) = {
+
+    // If there are categories we don't have yet, grab the first.
+
+    val kindInfo = accountInfo.dataKinds( item.typeTag ) // must exist
+    val categories = kindInfo.categories
+    val whatsUsed = currentCategories( item )
+    val idx = categories.indexWhere{ category => 
+                                       whatsUsed( category.tag ) == 0 }
+
+    if (idx >= 0)
+      Some( categories( idx ))
+    else {
+      // Choose first available...
+      val whatsAvailable = availableCategories( item )
+      if (whatsAvailable.size > 0)
+        Some( whatsAvailable( 0 ))
+      else
+        None
+    }
+    
   }
 
   // "Save" support...
