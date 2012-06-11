@@ -73,7 +73,7 @@ class DataKindInfo ( val categoryTagToResource: (Int => Int) = (x => -1),
 
   protected
   def category( categoryTag: Int, 
-                maxRecord: Int = -1,
+                maxRecords: Int = -1,
                 isCustom: Boolean = false ) =
     categoriesBuf += CategoryInfo( this, categoryTag, maxRecords, isCustom )
 }

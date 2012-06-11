@@ -17,7 +17,29 @@ class TestAccountInfo( atype: String, aname: String )
   extends AccountInfo
 {
   val initialGroupQuery = Future[ IndexedSeq[ Group ]]( IndexedSeq.empty )
-  val dataKinds = BaseAccountInfo.dataKinds
+
+  // Explicitly document the DataKind limitations that the tests rely on.
+  // Phones tightly limited, organization not so much.
+
+  val dataKinds = 
+    BaseAccountInfo.dataKinds.toMap
+      .updated( CDK.Phone.CONTENT_ITEM_TYPE,
+        new DataKindInfo( CDK.Phone.getTypeLabelResource _, maxRecords = 3 ) {
+          category( CDK.Phone.TYPE_HOME, maxRecords = 2 )
+          category( CDK.Phone.TYPE_WORK, maxRecords = 2 )
+          category( CDK.BaseTypes.TYPE_CUSTOM, isCustom = true, maxRecords = 1 )
+        })
+     .updated( CDK.Email.CONTENT_ITEM_TYPE,
+        new DataKindInfo( CDK.Email.getTypeLabelResource _ ) {
+          category( CDK.Email.TYPE_HOME )
+          category( CDK.Email.TYPE_WORK )
+          category( CDK.Email.TYPE_MOBILE )
+          category( CDK.Email.TYPE_OTHER )
+          category( CDK.BaseTypes.TYPE_CUSTOM, isCustom = true )
+        })
+     .updated( CDK.Nickname.CONTENT_ITEM_TYPE, new DataKindInfo() )
+
+  System.err.println( dataKinds( CDK.Phone.CONTENT_ITEM_TYPE ).categories )
 }
 
 class ModelSpec
@@ -296,6 +318,108 @@ class ModelSpec
       val acctInfo = AccountInfo.forRawContact( rawc )
       assert( acctInfo.isInstanceOf[ OtherAccountInfo ] )
     }
+  }
+
+  describe( "datakind management in edit states" ){
+
+    // Make a RawContactEditState with the limits on data kinds described
+    // above, in text fixture setup...
+
+    def makeRawc = new RawContact( accountType = "org.positronicnet.test" )
+    def makeRawContactEditState = {
+      val rawc = makeRawc
+      val agg = new AggregateContactEditState( Seq( (rawc, Seq.empty) ))
+      agg.rawContactEditStates(0)
+    }
+
+    it ("should impose no limits unless required") {
+
+      val state = makeRawContactEditState
+      import CDK.Email._
+
+      for (i <- Range( 0, 10 )) 
+        state.updateItem( email( "fred@fred.com", homeEmail ))
+
+      val availCats = state.availableCategories( email( "", homeEmail ))
+
+      availCats.map{ _.tag } should contain ( TYPE_HOME )
+    }
+
+    it ("should correctly count available data") {
+
+      import CDK.Phone._
+      import CDK.BaseTypes._
+
+      val state = makeRawContactEditState
+      state.updateItem( phone( "617 617 6176", homePhone ))
+      state.updateItem( phone( "617 617 6177", homePhone ))
+      state.updateItem( phone( "617 617 6178", workPhone ))
+
+      val cats = state.currentCategories( phone("", homePhone ))
+      cats( TYPE_HOME )   should be (2)
+      cats( TYPE_WORK )   should be (1)
+      cats( TYPE_CUSTOM ) should be (0)
+    }
+
+    it ("should respect limits on particular categories") {
+
+      import CDK.Phone._
+
+      val state = makeRawContactEditState
+      def homePhone( s: String ) = phone( s, CategoryLabel( TYPE_HOME, null ))
+
+      val dummyPhone = new Phone
+      def phoneCategories = state.availableCategories( dummyPhone )
+
+      val acctInfo = state.accountInfo
+
+      // limit on home phones is two
+
+      phoneCategories.map{ _.tag } should contain (TYPE_HOME) // have 0
+
+      state.updateItem( homePhone( "617 555 1212" ))
+      phoneCategories.map{ _.tag } should contain (TYPE_HOME) // have 1
+
+      state.updateItem( homePhone( "617 555 5555" ))
+      phoneCategories.map{ _.tag } should (not contain (TYPE_HOME)) // have 2
+    }
+    
+    it ("should respect limits on DataKind records as a group") {
+
+      import CDK.Phone._
+      val state = makeRawContactEditState
+      val dummyPhone = new Phone
+      def phoneCategories = state.availableCategories( dummyPhone )
+      
+      state.updateItem( phone( "617 555 5555", workPhone ))
+      state.updateItem( phone( "617 555 5555", workPhone ))
+
+      phoneCategories.map{ _.tag } should (not contain (TYPE_WORK)) // have 2
+      phoneCategories.map{ _.tag } should contain (TYPE_HOME)
+
+      state.updateItem( phone( "617 555 5555", homePhone ))
+      phoneCategories.map{ _.tag } should have size (0) // be empty; now 3 total
+    }
+
+    it ("should suggest categories with no exemplars, if any") {
+      
+      import CDK.Phone._
+      val state = makeRawContactEditState
+      val dummyPhone = new Phone
+
+      def processedPhone = 
+        state.prepareForInsert( dummyPhone ).get.asInstanceOf[Phone]
+      def newCategoryTag = processedPhone.categoryLabel.tag
+      
+      newCategoryTag should be (TYPE_HOME) // with nothing present
+
+      state.updateItem( phone( "555 555 5555", homePhone ))
+      newCategoryTag should be (TYPE_WORK) // with nothing present
+
+      state.updateItem( phone( "555 555 5555", workPhone ))
+      newCategoryTag should be (TYPE_HOME) // should skip custom; use unfull
+    }
+
   }
 
 }

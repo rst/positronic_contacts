@@ -136,8 +136,14 @@ class RawContactEditState( val aggregateEditState: AggregateContactEditState,
     accountInfo.dataKinds.get( item.typeTag ) match {
       case Some( kindInfo ) => 
         val whatsUsed = currentCategories( item )
-        kindInfo.categories.filter{ category =>
-          category.availableAfterHaving( whatsUsed( category.tag )) }
+        val totalRecs = 
+          if (whatsUsed.isEmpty) 0 else whatsUsed.values.reduce{ _ + _ }
+
+        if (kindInfo.maxRecords >= 0 && totalRecs >= kindInfo.maxRecords)
+          IndexedSeq.empty
+        else
+          kindInfo.categories.filter{ category =>
+            category.availableAfterHaving( whatsUsed( category.tag )) }
       case None => 
         IndexedSeq.empty
     }
@@ -158,7 +164,7 @@ class RawContactEditState( val aggregateEditState: AggregateContactEditState,
           case _ =>
         }
 
-    res.toMap
+    res.toMap.withDefault( categoryTag => 0 )
   }
 
   // Data kind info for an item, if any
@@ -194,7 +200,8 @@ class RawContactEditState( val aggregateEditState: AggregateContactEditState,
     val categories = kindInfo.categories
     val whatsUsed = currentCategories( item )
     val idx = categories.indexWhere{ category => 
-                                       whatsUsed( category.tag ) == 0 }
+                                       whatsUsed( category.tag ) == 0 &&
+                                       !category.isCustom }
 
     if (idx >= 0)
       Some( categories( idx ))
