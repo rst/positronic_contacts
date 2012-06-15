@@ -199,6 +199,7 @@ class DataKindEditor( ctx: Context, attrs: AttributeSet )
       case Some( newItem ) => 
         val view = newView
         view.bind( newItem )
+        state.updateItem( view.updatedItem ) // count it into the limits.
         view.requestFocus
 
       case None => 
@@ -511,6 +512,7 @@ class CategoryChooser( ctx: Context, attrs: AttributeSet )
   def setCategoryLabel( categoryLabel: CategoryLabel ) = { 
     this.categoryLabel = categoryLabel
     setText( info.categoryLabelToString( categoryLabel ))
+    editState.updateItem( datumEditor.updatedItem ) // To keep counts; kludge.
   }
 
   // User interaction
