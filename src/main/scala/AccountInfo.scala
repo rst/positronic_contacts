@@ -24,6 +24,10 @@ object AccountInfo {
     new GoogleAccountInfo( rawc.accountType, rawc.accountName )
   }
 
+  register( "com.android.exchange" ){ (rawc) =>
+    new ExchangeAccountInfo( rawc.accountType, rawc.accountName )
+  }
+
   def forRawContact( rawc: RawContact ) = {
     val func = accountInfoTypes.getOrElse( 
       rawc.accountType,
@@ -211,4 +215,73 @@ class GoogleAccountInfo( acctType: String, acctName: String )
         })
 }
 
+object ExchangeAccountInfo {
+  val dataKinds = 
+    Map( 
+      CDK.StructuredName.CONTENT_ITEM_TYPE -> 
+        new DataKindInfo(),
 
+      CDK.Phone.CONTENT_ITEM_TYPE ->
+        new DataKindInfo( CDK.Phone.getTypeLabelResource _ ) {
+          category( CDK.Phone.TYPE_HOME, maxRecords = 2 )
+          category( CDK.Phone.TYPE_WORK, maxRecords = 2 )
+          category( CDK.Phone.TYPE_MOBILE, maxRecords = 1 )
+          category( CDK.Phone.TYPE_FAX_WORK, maxRecords = 1 )
+          category( CDK.Phone.TYPE_FAX_HOME, maxRecords = 1 )
+          category( CDK.Phone.TYPE_CAR, maxRecords = 1 )
+          category( CDK.Phone.TYPE_COMPANY_MAIN, maxRecords = 1 )
+
+          // Gingerbread has isCustom=true for TYPE_ASSISTANT here;
+          // ICS doesn't, which makes a lot more sense.
+          category( CDK.Phone.TYPE_ASSISTANT, maxRecords = 1 )
+        },
+
+      CDK.Email.CONTENT_ITEM_TYPE ->
+        new DataKindInfo( CDK.Email.getTypeLabelResource _, maxRecords = 3 ) {
+          // Types ignored; we let 'em set 'em here, for the moment...
+          category( CDK.Email.TYPE_HOME )
+          category( CDK.Email.TYPE_WORK )
+          category( CDK.Email.TYPE_MOBILE )
+          category( CDK.Email.TYPE_OTHER )
+          category( CDK.BaseTypes.TYPE_CUSTOM, isCustom = true )
+        },
+
+      CDK.StructuredPostal.CONTENT_ITEM_TYPE ->
+        new DataKindInfo( CDK.StructuredPostal.getTypeLabelResource _ ) {
+          category( CDK.StructuredPostal.TYPE_HOME, maxRecords = 1 )
+          category( CDK.StructuredPostal.TYPE_WORK, maxRecords = 1 )
+          category( CDK.StructuredPostal.TYPE_OTHER, maxRecords = 1 )
+        },
+
+      CDK.Organization.CONTENT_ITEM_TYPE ->
+        new DataKindInfo( CDK.Organization.getTypeLabelResource _ ) {
+          category( CDK.Organization.TYPE_WORK, maxRecords = 1 )
+          category( CDK.Organization.TYPE_OTHER, maxRecords = 1 )
+          category( CDK.BaseTypes.TYPE_CUSTOM, maxRecords = 1, isCustom = true )
+        },
+
+      CDK.Im.CONTENT_ITEM_TYPE ->
+        new DataKindInfo( CDK.Im.getProtocolLabelResource _ ) {
+          category( CDK.Im.PROTOCOL_AIM )
+          category( CDK.Im.PROTOCOL_MSN )
+          category( CDK.Im.PROTOCOL_YAHOO )
+          category( CDK.Im.PROTOCOL_SKYPE )
+          category( CDK.Im.PROTOCOL_QQ )
+          category( CDK.Im.PROTOCOL_GOOGLE_TALK )
+          category( CDK.Im.PROTOCOL_ICQ )
+          category( CDK.Im.PROTOCOL_JABBER )
+          category( CDK.Im.PROTOCOL_CUSTOM, isCustom = true )
+        },
+
+      CDK.Website.CONTENT_ITEM_TYPE  -> new DataKindInfo( maxRecords = 1 ),
+      CDK.Note.CONTENT_ITEM_TYPE     -> new DataKindInfo(),
+      CDK.Nickname.CONTENT_ITEM_TYPE -> new DataKindInfo()
+    )
+}
+
+class ExchangeAccountInfo( acctType: String, acctName: String ) 
+  extends AccountInfo
+{
+  val initialGroupQuery = Future[ IndexedSeq[ Group ]]( IndexedSeq.empty )
+  val dataKinds = ExchangeAccountInfo.dataKinds
+}
