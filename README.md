@@ -10,7 +10,7 @@ itself following instructions [here](http://rst.github.com/tut_sections/2001/01/
 Then compile and build this app:
 
     $ cd [your workspace]
-    $ git clone https://github.com/rst/UmbrellaToday.git
+    $ git clone https://github.com/rst/positronic_contacts.git
     $ cd positronic_contacts
     $ sbt android:package-debug
 
